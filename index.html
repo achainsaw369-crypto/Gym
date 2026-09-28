@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no, interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -19,7 +19,7 @@
   --gold:#E8A900;   /* рекорд */
   --num:"Avenir Next Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
 }
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--chalk);color:var(--ink);
   font:16px/1.4 -apple-system,system-ui,"Helvetica Neue",sans-serif;-webkit-text-size-adjust:100%}
 body{position:fixed;left:0;right:0;top:0;display:flex;flex-direction:column}
@@ -114,7 +114,7 @@ textarea{width:100%;min-height:70px;border:1.5px solid var(--line);border-radius
 .box{background:var(--paper);border-radius:14px;padding:14px;margin:0 0 14px}
 .box h2{font-family:var(--num);font-size:22px;margin:0 0 6px}
 .exrow{display:flex;align-items:center;gap:10px;padding:2px 0;border-bottom:1px solid var(--line)}
-.exrow span{flex:1}
+.exrow span{flex:1;min-width:0}
 .exrow i,.pick i{width:10px;height:10px;border-radius:2px;background:var(--iron);flex:none}
 .exrow.c i,.pick.c i{background:var(--blue)}
 
@@ -139,6 +139,21 @@ nav{flex:none;background:var(--paper);border-top:1px solid var(--line);
 .create div{flex:1 0 100%}
 .chip{border:0;border-radius:20px;padding:9px 16px;color:#fff;font-weight:650}
 .chip.s{background:var(--iron)} .chip.c{background:var(--blue)}
+
+/* группы мышц, добавление за дату */
+.grp{font-family:var(--num);font-size:18px;font-weight:700;color:var(--mute);margin:0;padding:12px 0 4px;position:sticky;top:0;background:var(--paper)}
+.grp.static{position:static;background:none;padding-top:14px}
+.gsel{border:1.5px solid var(--line);border-radius:8px;background:#fff;padding:6px 4px;font-size:14px;max-width:104px}
+.newdate{display:flex;gap:10px;align-items:flex-end;background:var(--paper);border-radius:12px;padding:12px;margin:0 0 14px}
+.newdate label{flex:1;font-size:13px;color:var(--mute)}
+.newdate input{display:block;width:100%;margin-top:4px;padding:10px;border:1.5px solid var(--line);border-radius:8px;background:#fff}
+.newdate .btn{width:auto;margin:0;padding:12px 18px}
+.gbars{background:var(--paper);border-radius:12px;padding:10px 12px;margin-bottom:16px}
+.sub{font-family:var(--num);font-size:18px;margin:0 0 6px}
+.gb{display:grid;grid-template-columns:72px 1fr 28px;gap:8px;align-items:center;font-size:14px;margin:5px 0}
+.gb div{height:10px;background:var(--chalk);border-radius:5px;overflow:hidden}
+.gb i{display:block;height:100%;background:var(--iron)}
+.gb b{text-align:right;font-variant-numeric:tabular-nums}
 
 #toast{position:absolute;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;
   padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;max-width:90vw;text-align:center}
@@ -174,15 +189,37 @@ const fmtInt=n=>Math.round(n).toLocaleString('ru-RU');
 
 /* ---------- данные ---------- */
 const KEY='zhurnal.v1';
+const STRENGTH_GROUPS=['Грудь','Спина','Ноги','Плечи','Бицепс','Трицепс','Пресс','Другое'];
+const ALL_GROUPS=[...STRENGTH_GROUPS,'Кардио'];
 const SEED=[
-  ['Жим лёжа','s'],['Приседания со штангой','s'],['Становая тяга','s'],['Жим штанги стоя','s'],
-  ['Тяга штанги в наклоне','s'],['Подтягивания','s'],['Отжимания на брусьях','s'],['Жим гантелей лёжа','s'],
-  ['Сгибания на бицепс','s'],['Французский жим','s'],['Румынская тяга','s'],['Жим ногами','s'],
-  ['Бег','c'],['Велосипед','c'],['Плавание','c'],['Ходьба','c'],['Гребной тренажёр','c'],['Эллипс','c']
+  ['Жим лёжа','s','Грудь'],['Жим гантелей лёжа','s','Грудь'],['Жим на наклонной скамье','s','Грудь'],
+  ['Разводка гантелей','s','Грудь'],['Отжимания','s','Грудь'],['Отжимания на брусьях','s','Грудь'],['Сведение в кроссовере','s','Грудь'],
+  ['Становая тяга','s','Спина'],['Подтягивания','s','Спина'],['Тяга штанги в наклоне','s','Спина'],
+  ['Тяга верхнего блока','s','Спина'],['Тяга нижнего блока','s','Спина'],['Тяга гантели в наклоне','s','Спина'],['Гиперэкстензия','s','Спина'],
+  ['Приседания со штангой','s','Ноги'],['Румынская тяга','s','Ноги'],['Жим ногами','s','Ноги'],
+  ['Выпады','s','Ноги'],['Разгибания ног','s','Ноги'],['Сгибания ног','s','Ноги'],['Подъём на носки','s','Ноги'],
+  ['Жим штанги стоя','s','Плечи'],['Жим гантелей сидя','s','Плечи'],['Махи гантелей в стороны','s','Плечи'],
+  ['Тяга штанги к подбородку','s','Плечи'],['Махи в наклоне','s','Плечи'],
+  ['Сгибания на бицепс','s','Бицепс'],['Подъём штанги на бицепс','s','Бицепс'],['Молотки','s','Бицепс'],
+  ['Французский жим','s','Трицепс'],['Разгибания на блоке','s','Трицепс'],['Жим узким хватом','s','Трицепс'],
+  ['Скручивания','s','Пресс'],['Подъём ног в висе','s','Пресс'],['Планка','s','Пресс'],
+  ['Бег','c','Кардио'],['Велосипед','c','Кардио'],['Плавание','c','Кардио'],['Ходьба','c','Кардио'],['Гребной тренажёр','c','Кардио'],['Эллипс','c','Кардио']
 ];
-const fresh=()=>({v:1,exercises:SEED.map(([name,type])=>({id:uid(),name,type})),workouts:[],lastBackup:null});
+const GROUP_OF={};SEED.forEach(([n,,g])=>GROUP_OF[n.toLowerCase()]=g);
+const groupOf=e=>e.type==='c'?'Кардио':(STRENGTH_GROUPS.includes(e.group)?e.group:'Другое');
+const fresh=()=>({v:2,exercises:SEED.map(([name,type,group])=>({id:uid(),name,type,group})),workouts:[],lastBackup:null});
 let db=(()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&Array.isArray(j.workouts)&&Array.isArray(j.exercises))return j}catch(e){}return fresh()})();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Не удалось сохранить: память браузера недоступна')}}
+/* старые данные: проставить группы и один раз добавить новые упражнения из списка */
+function migrate(){
+  let ch=false;
+  db.exercises.forEach(e=>{if(!e.group){e.group=e.type==='c'?'Кардио':(GROUP_OF[e.name.toLowerCase()]||'Другое');ch=true}});
+  if((db.v||1)<2){
+    SEED.forEach(([name,type,group])=>{if(!db.exercises.some(e=>e.name.toLowerCase()===name.toLowerCase()))db.exercises.push({id:uid(),name,type,group})});
+    db.v=2;ch=true;
+  }
+  if(ch)save();
+}
 
 const exById=id=>db.exercises.find(e=>e.id===id);
 const wById=id=>db.workouts.find(w=>w.id===id);
@@ -250,7 +287,8 @@ let tab='today',editing=null,curId=null,progEx=null,pickQ='';
 function entryHTML(w,en,i){
   const type=exType(en.ex);
   const l=lastTime(en.ex,w);
-  const lastLine=l?`Прошлый раз, ${fmtMid(l.date)}: ${type==='s'?setsText(l.en):cardioText(l.en)}`:'Раньше не выполнялось';
+  const exo=exById(en.ex),grp=exo?groupOf(exo)+'. ':'';
+  const lastLine=grp+(l?`Прошлый раз, ${fmtMid(l.date)}: ${type==='s'?setsText(l.en):cardioText(l.en)}`:'Раньше не выполнялось');
   let body;
   if(type==='s'){
     const rows=(en.sets||[]).map((s,j)=>{
@@ -285,18 +323,25 @@ function editorHTML(w,canBack){
     <div class="foot"><label>Дата <input type="date" data-f="date" value="${w.date}"></label>
     <button class="danger" data-a="delw">Удалить тренировку</button></div>`;
 }
+function newDateHTML(){
+  const y=new Date();y.setDate(y.getDate()-1);
+  return `<div class="newdate"><label>Тренировка за другую дату<input type="date" id="nd" value="${toStr(y)}"></label>
+    <button class="btn ghost" data-a="newdate">Создать</button></div>`;
+}
+const groupsText=w=>[...new Set(w.entries.map(e=>exById(e.ex)).filter(Boolean).map(groupOf))].join(', ');
 function startHTML(){
   const last=byDateDesc()[0];
   return `<div class="date">${fmtLong(todayStr())}</div>
     <div class="start"><p class="lead">Сегодня тренировки ещё нет.</p>
     <button class="btn big" data-a="start">Начать тренировку</button>
     ${last?`<button class="btn ghost" data-a="repeat">Повторить прошлую: ${esc(last.name||fmtMid(last.date))}</button>`:''}</div>
+    ${newDateHTML()}
     ${db.workouts.length?'':'<p class="mute">Добавляй упражнения: для силовых вносишь вес и повторы, для кардио дистанцию и время. Результаты прошлых тренировок подсказываются автоматически.</p>'}`;
 }
 function historyHTML(){
   const list=byDateDesc();
-  if(!list.length)return '<h1 class="h1">История</h1><p class="mute">Здесь появятся тренировки. Начни первую на вкладке «Сегодня».</p>';
-  let html='<h1 class="h1">История</h1>',cur='';
+  if(!list.length)return '<h1 class="h1">История</h1>'+newDateHTML()+'<p class="mute">Здесь появятся тренировки. Начни первую на вкладке «Сегодня» или добавь за любую дату выше.</p>';
+  let html='<h1 class="h1">История</h1>'+newDateHTML(),cur='';
   for(const w of list){
     const d=parseD(w.date);
     const m=d.toLocaleDateString('ru-RU',{month:'long',year:'numeric'});
@@ -305,7 +350,7 @@ function historyHTML(){
     const dots=types.map(t=>`<i class="${t}"></i>`).join('');
     html+=`<button class="hrow" data-a="open" data-id="${w.id}">
       <div class="hd"><b>${d.getDate()}</b><span>${d.toLocaleDateString('ru-RU',{weekday:'short'})}</span></div>
-      <div class="hb"><div class="hn"><span class="dots">${dots}</span>${esc(w.name)||'Тренировка'}</div>
+      <div class="hb"><div class="hn"><span class="dots">${dots}</span>${esc(w.name||groupsText(w))||'Тренировка'}</div>
       <div class="hs">${esc(w.entries.map(e=>exName(e.ex)).join(', '))||'без упражнений'}</div>
       <div class="ht">${totalsText(totals(w))}</div></div></button>`;
   }
@@ -344,6 +389,10 @@ function progressHTML(){
     <div class="week"><div><b>${wk.length}</b><span>тренировок за 7 дней</span></div>
     <div><b>${fmtInt(vol)}</b><span>кг тоннаж</span></div>
     <div><b>${fmtN(km)}</b><span>км кардио</span></div></div>`;
+  const gs={};
+  wk.forEach(w=>w.entries.forEach(en=>{const ex=exById(en.ex);if(!ex||ex.type!=='s')return;const n=(en.sets||[]).filter(x=>x.r).length;if(n)gs[groupOf(ex)]=(gs[groupOf(ex)]||0)+n}));
+  const gmax=Math.max(0,...Object.values(gs));
+  if(gmax)html+=`<div class="gbars"><h2 class="sub">Подходы по группам за 7 дней</h2>${STRENGTH_GROUPS.filter(g=>gs[g]).map(g=>`<div class="gb"><span>${g}</span><div><i style="width:${gs[g]/gmax*100}%"></i></div><b>${gs[g]}</b></div>`).join('')}</div>`;
   const cnt={};
   db.workouts.forEach(w=>w.entries.forEach(en=>{if(hasData(en))cnt[en.ex]=(cnt[en.ex]||0)+1}));
   const ids=Object.keys(cnt).filter(id=>exById(id)).sort((a,b)=>cnt[b]-cnt[a]);
@@ -352,7 +401,11 @@ function progressHTML(){
   const type=exType(progEx);
   const sess=[...db.workouts].sort((a,b)=>a.date.localeCompare(b.date)||a.created-b.created)
     .map(w=>({w,en:w.entries.find(e=>e.ex===progEx&&hasData(e))})).filter(x=>x.en);
-  html+=`<select class="sel" id="progsel" aria-label="Упражнение">${ids.map(id=>`<option value="${id}"${id===progEx?' selected':''}>${esc(exName(id))}</option>`).join('')}</select>`;
+  const opts=ALL_GROUPS.map(g=>{
+    const it=ids.filter(id=>groupOf(exById(id))===g).sort((a,b)=>exName(a).localeCompare(exName(b),'ru'));
+    return it.length?`<optgroup label="${g}">${it.map(id=>`<option value="${id}"${id===progEx?' selected':''}>${esc(exName(id))}</option>`).join('')}</optgroup>`:'';
+  }).join('');
+  html+=`<select class="sel" id="progsel" aria-label="Упражнение">${opts}</select>`;
   let pts,unit,recs;
   if(type==='s'){
     const useW=sess.some(x=>x.en.sets.some(s=>s.r&&s.w>0));
@@ -387,10 +440,15 @@ function moreHTML(){
     <button class="btn" data-a="export">Сохранить копию</button>
     <label class="btn ghost">Загрузить копию<input id="imp" type="file" accept="application/json,.json" hidden></label></section>
     <section class="box"><h2>Упражнения</h2>
-    ${exs.map(e=>`<div class="exrow ${e.type}"><i></i><span>${esc(e.name)}</span>
-      <button class="ico" data-a="exrename" data-id="${e.id}" aria-label="Переименовать">✎</button>
-      <button class="ico" data-a="exdel" data-id="${e.id}" aria-label="Удалить">×</button></div>`).join('')}
-    <p class="mute">Новые упражнения добавляются прямо во время тренировки.</p></section>
+    ${ALL_GROUPS.map(g=>{
+      const it=db.exercises.filter(e=>groupOf(e)===g).sort((x,y)=>x.name.localeCompare(y.name,'ru'));
+      if(!it.length)return '';
+      return `<h4 class="grp static">${g}</h4>`+it.map(e=>`<div class="exrow ${e.type}"><i></i><span>${esc(e.name)}</span>
+        ${e.type==='s'?`<select class="gsel" data-gsel="${e.id}" aria-label="Группа мышц">${STRENGTH_GROUPS.map(x=>`<option${x===groupOf(e)?' selected':''}>${x}</option>`).join('')}</select>`:''}
+        <button class="ico" data-a="exrename" data-id="${e.id}" aria-label="Переименовать">✎</button>
+        <button class="ico" data-a="exdel" data-id="${e.id}" aria-label="Удалить">×</button></div>`).join('');
+    }).join('')}
+    <p class="mute">Новые упражнения добавляются прямо во время тренировки. Группу мышц можно поменять здесь.</p></section>
     <section class="box"><button class="danger" data-a="wipe">Стереть все данные</button></section>`;
 }
 
@@ -433,13 +491,21 @@ const closeSheet=()=>$('#sheet')?.remove();
 function renderPick(){
   const q=pickQ.trim().toLowerCase(),use={};
   db.workouts.forEach(w=>w.entries.forEach(en=>use[en.ex]=(use[en.ex]||0)+1));
-  const list=db.exercises.filter(e=>!q||e.name.toLowerCase().includes(q))
-    .sort((a,b)=>(use[b.id]||0)-(use[a.id]||0)||a.name.localeCompare(b.name,'ru'));
-  let html=list.map(e=>`<button class="pick ${e.type}" data-a="pick" data-id="${e.id}"><i></i>${esc(e.name)}</button>`).join('');
+  const ok=e=>!q||e.name.toLowerCase().includes(q);
+  const row=e=>`<button class="pick ${e.type}" data-a="pick" data-id="${e.id}"><i></i>${esc(e.name)}</button>`;
+  const byUse=(a,b)=>(use[b.id]||0)-(use[a.id]||0)||a.name.localeCompare(b.name,'ru');
+  let html='';
   if(q&&!db.exercises.some(e=>e.name.toLowerCase()===q)){
-    html=`<div class="create"><div>Создать «${esc(pickQ.trim())}»</div>
-      <button class="chip s" data-a="create" data-t="s">Силовое</button>
-      <button class="chip c" data-a="create" data-t="c">Кардио</button></div>`+html;
+    html+=`<div class="create"><div>Создать «${esc(pickQ.trim())}». Выбери группу:</div>
+      ${ALL_GROUPS.map(g=>`<button class="chip ${g==='Кардио'?'c':'s'}" data-a="create" data-g="${g}">${g}</button>`).join('')}</div>`;
+  }
+  if(!q){
+    const rec=db.exercises.filter(e=>use[e.id]).sort(byUse).slice(0,5);
+    if(rec.length)html+='<h4 class="grp">Часто</h4>'+rec.map(row).join('');
+  }
+  for(const g of ALL_GROUPS){
+    const items=db.exercises.filter(e=>groupOf(e)===g&&ok(e)).sort(byUse);
+    if(items.length)html+=`<h4 class="grp">${g}</h4>`+items.map(row).join('');
   }
   $('#plist').innerHTML=html||'<p class="mute">Ничего не найдено</p>';
 }
@@ -478,7 +544,7 @@ function importFile(f){
       });
       const ids=new Set(db.workouts.map(w=>w.id));let n=0;
       j.workouts.forEach(w=>{if(ids.has(w.id))return;w.entries.forEach(en=>en.ex=map[en.ex]||en.ex);db.workouts.push(w);n++});
-      save();render();toast(`Добавлено тренировок: ${n}`);
+      migrate();save();render();toast(`Добавлено тренировок: ${n}`);
     }catch(e){toast('Это не файл копии журнала')}
   });
 }
@@ -505,6 +571,12 @@ document.addEventListener('click',e=>{
       :{id:uid(),ex:x.ex,km:null,min:null});
     db.workouts.push({id:uid(),created:Date.now(),date:todayStr(),name:last.name||'',note:'',entries});save();render();
   }
+  else if(a==='newdate'){
+    const v=$('#nd').value;if(!v){toast('Выбери дату');return}
+    const nw={id:uid(),created:Date.now(),date:v,name:'',note:'',entries:[]};
+    db.workouts.push(nw);save();
+    tab=v===todayStr()?'today':'history';editing=nw.id;render();$('#app').scrollTop=0;
+  }
   else if(a==='open'){editing=t.dataset.id;render();$('#app').scrollTop=0}
   else if(a==='back'){editing=null;render()}
   else if(a==='addex'){openSheet()}
@@ -513,7 +585,7 @@ document.addEventListener('click',e=>{
   else if(a==='create'){
     let name=pickQ.trim();if(!name)return;
     name=name[0].toUpperCase()+name.slice(1);
-    const ex={id:uid(),name,type:t.dataset.t};db.exercises.push(ex);save();addEntry(ex.id);
+    const g=t.dataset.g,ex={id:uid(),name,type:g==='Кардио'?'c':'s',group:g};db.exercises.push(ex);save();addEntry(ex.id);
   }
   else if(a==='delex'&&en){
     if(confirm(`Убрать «${exName(en.ex)}» из тренировки?`)){w.entries.splice(+sec.dataset.e,1);save();render()}
@@ -566,11 +638,16 @@ document.addEventListener('change',e=>{
   const el=e.target;
   if(el.dataset.f==='date'&&curId&&el.value){const w=wById(curId);w.date=el.value;save();editing=w.id;render()}
   else if(el.id==='progsel'){progEx=el.value;render()}
+  else if(el.dataset.gsel){const ex=exById(el.dataset.gsel);if(ex){ex.group=el.value;save();render()}}
   else if(el.id==='imp'){importFile(el.files[0]);el.value=''}
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&tab==='today'&&!editing&&(!document.activeElement||document.activeElement===document.body))render();
 });
+
+/* запрет масштабирования: щипок двумя пальцами (двойной тап закрыт через touch-action в CSS) */
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
 
 /* клавиатура: страница не двигается, рабочая область сжимается до видимой части */
 const vv=window.visualViewport;
@@ -594,6 +671,7 @@ document.addEventListener('focusin',e=>{
 });
 fitViewport();
 
+migrate();
 render();
 navigator.storage?.persist?.();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
