@@ -144,10 +144,10 @@ nav{flex:none;background:var(--paper);border-top:1px solid var(--line);
 .grp{font-family:var(--num);font-size:18px;font-weight:700;color:var(--mute);margin:0;padding:12px 0 4px;position:sticky;top:0;background:var(--paper)}
 .grp.static{position:static;background:none;padding-top:14px}
 .gsel{border:1.5px solid var(--line);border-radius:8px;background:#fff;padding:6px 4px;font-size:14px;max-width:104px}
-.newdate{display:flex;gap:10px;align-items:flex-end;background:var(--paper);border-radius:12px;padding:12px;margin:0 0 14px}
-.newdate label{flex:1;font-size:13px;color:var(--mute)}
-.newdate input{display:block;width:100%;margin-top:4px;padding:10px;border:1.5px solid var(--line);border-radius:8px;background:#fff}
-.newdate .btn{width:auto;margin:0;padding:12px 18px}
+.newdate{background:var(--paper);border-radius:12px;padding:12px;margin:0 0 14px}
+.newdate label{display:block;font-size:13px;color:var(--mute)}
+.newdate input{display:block;width:100%;min-width:0;max-width:100%;height:46px;margin-top:4px;padding:0 10px;border:1.5px solid var(--line);border-radius:8px;background:#fff;-webkit-appearance:none;appearance:none;text-align:left}
+.newdate .btn{width:100%;margin:10px 0 0;padding:13px}
 .gbars{background:var(--paper);border-radius:12px;padding:10px 12px;margin-bottom:16px}
 .sub{font-family:var(--num);font-size:18px;margin:0 0 6px}
 .gb{display:grid;grid-template-columns:72px 1fr 28px;gap:8px;align-items:center;font-size:14px;margin:5px 0}
@@ -189,7 +189,7 @@ const fmtInt=n=>Math.round(n).toLocaleString('ru-RU');
 
 /* ---------- данные ---------- */
 const KEY='zhurnal.v1';
-const VERSION='1.6';
+const VERSION='1.7';
 const STRENGTH_GROUPS=['Грудь','Спина','Ноги','Плечи','Бицепс','Трицепс','Пресс','Другое'];
 const ALL_GROUPS=[...STRENGTH_GROUPS,'Кардио'];
 const SEED=[
