@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -126,14 +126,14 @@ nav{flex:none;background:var(--paper);border-top:1px solid var(--line);
 .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .tab.on{color:var(--ink);border-top-color:var(--iron);font-weight:650}
 
-/* выбор упражнения */
-#sheet{position:absolute;inset:0;z-index:20}
-.scrim{position:absolute;inset:0;background:rgba(23,25,27,.45)}
-.panel{position:absolute;left:0;right:0;bottom:0;max-height:82vh;overflow:auto;background:var(--paper);
-  border-radius:18px 18px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom));animation:up .18s ease-out}
-@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
-.grab{width:40px;height:4px;background:var(--line);border-radius:2px;margin:4px auto 10px}
-#q{width:100%;padding:12px;border:1.5px solid var(--ink);border-radius:10px;background:#fff;margin-bottom:6px}
+/* выбор упражнения: на весь видимый экран, поле поиска сверху — клавиатура его не закрывает */
+#sheet{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100%);z-index:20;
+  display:flex;flex-direction:column;background:var(--paper);animation:fade .15s ease-out}
+@keyframes fade{from{opacity:.3}to{opacity:1}}
+.sbar{flex:none;display:flex;gap:12px;align-items:center;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;border-bottom:1px solid var(--line)}
+#q{flex:1;min-width:0;padding:12px;border:1.5px solid var(--ink);border-radius:10px;background:#fff}
+.sbar button{border:0;background:none;color:var(--blue);font-weight:600;padding:8px 0}
+#plist{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 16px calc(12px + env(safe-area-inset-bottom))}
 .pick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;padding:13px 4px;border-bottom:1px solid var(--line);font-size:17px}
 .create{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0;border-bottom:2px solid var(--ink);font-weight:650}
 .create div{flex:1 0 100%}
@@ -426,7 +426,7 @@ function updateStars(sec,w,en){
 /* ---------- выбор упражнения ---------- */
 function openSheet(){
   const s=document.createElement('div');s.id='sheet';
-  s.innerHTML='<div class="scrim" data-a="close"></div><div class="panel"><div class="grab"></div><input id="q" type="text" placeholder="Найти или добавить упражнение" autocomplete="off"><div id="plist"></div></div>';
+  s.innerHTML='<div class="sbar"><input id="q" type="text" placeholder="Найти или добавить упражнение" autocomplete="off"><button data-a="close">Отмена</button></div><div id="plist"></div>';
   document.body.appendChild(s);pickQ='';renderPick();$('#q').focus();
 }
 const closeSheet=()=>$('#sheet')?.remove();
@@ -574,13 +574,19 @@ document.addEventListener('visibilitychange',()=>{
 
 /* клавиатура: страница не двигается, рабочая область сжимается до видимой части */
 const vv=window.visualViewport;
+let lastVV='';
 function fitViewport(){
   if(!vv)return;
-  document.body.style.height=vv.height+'px';
-  document.body.style.top=vv.offsetTop+'px';
-  document.body.classList.toggle('kb',vv.height<window.innerHeight-120);
+  const h=Math.round(vv.height),t=Math.round(vv.offsetTop),key=h+'/'+t;
+  if(key===lastVV)return;
+  lastVV=key;
+  const r=document.documentElement.style;
+  r.setProperty('--vvh',h+'px');r.setProperty('--vvt',t+'px');
+  document.body.style.height=h+'px';document.body.style.top=t+'px';
+  document.body.classList.toggle('kb',h<window.innerHeight-120);
   window.scrollTo(0,0);
 }
+if(vv)setInterval(fitViewport,150);
 if(vv){vv.addEventListener('resize',fitViewport);vv.addEventListener('scroll',fitViewport)}
 document.addEventListener('focusin',e=>{
   const el=e.target;
