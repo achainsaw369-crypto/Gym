@@ -20,10 +20,12 @@
   --num:"Avenir Next Condensed","Arial Narrow","Roboto Condensed",system-ui,sans-serif;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--chalk);color:var(--ink);
+html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:var(--chalk);color:var(--ink);
   font:16px/1.4 -apple-system,system-ui,"Helvetica Neue",sans-serif;-webkit-text-size-adjust:100%}
-body{padding:env(safe-area-inset-top) 0 calc(74px + env(safe-area-inset-bottom))}
-#app{max-width:560px;margin:0 auto;padding:14px 16px 28px}
+body{position:fixed;left:0;right:0;top:0;display:flex;flex-direction:column}
+#app{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+  padding:calc(14px + env(safe-area-inset-top)) max(16px,calc((100vw - 560px)/2)) 28px}
+body.kb nav{display:none}
 button,input,textarea,select{font:inherit;color:inherit}
 input,textarea,select{font-size:16px}
 button{cursor:pointer}
@@ -117,7 +119,7 @@ textarea{width:100%;min-height:70px;border:1.5px solid var(--line);border-radius
 .exrow.c i,.pick.c i{background:var(--blue)}
 
 /* нижняя панель */
-nav{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1px solid var(--line);
+nav{flex:none;background:var(--paper);border-top:1px solid var(--line);
   display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom)}
 .tab{border:0;background:none;padding:9px 0 8px;display:flex;flex-direction:column;align-items:center;gap:3px;
   font-size:11px;color:var(--mute);border-top:3px solid transparent;margin-top:-1px}
@@ -125,7 +127,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1p
 .tab.on{color:var(--ink);border-top-color:var(--iron);font-weight:650}
 
 /* выбор упражнения */
-#sheet{position:fixed;inset:0;z-index:20}
+#sheet{position:absolute;inset:0;z-index:20}
 .scrim{position:absolute;inset:0;background:rgba(23,25,27,.45)}
 .panel{position:absolute;left:0;right:0;bottom:0;max-height:82vh;overflow:auto;background:var(--paper);
   border-radius:18px 18px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom));animation:up .18s ease-out}
@@ -138,7 +140,7 @@ nav{position:fixed;left:0;right:0;bottom:0;background:var(--paper);border-top:1p
 .chip{border:0;border-radius:20px;padding:9px 16px;color:#fff;font-weight:650}
 .chip.s{background:var(--iron)} .chip.c{background:var(--blue)}
 
-#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;
+#toast{position:absolute;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;
   padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -490,7 +492,7 @@ function toast(m){
 /* ---------- события ---------- */
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab],[data-a]');if(!t)return;
-  if(t.dataset.tab){tab=t.dataset.tab;editing=null;closeSheet();render();window.scrollTo(0,0);return}
+  if(t.dataset.tab){tab=t.dataset.tab;editing=null;closeSheet();render();$('#app').scrollTop=0;return}
   const a=t.dataset.a,sec=t.closest('[data-e]');
   const w=curId&&wById(curId);
   const en=w&&sec?w.entries[+sec.dataset.e]:null;
@@ -503,7 +505,7 @@ document.addEventListener('click',e=>{
       :{id:uid(),ex:x.ex,km:null,min:null});
     db.workouts.push({id:uid(),created:Date.now(),date:todayStr(),name:last.name||'',note:'',entries});save();render();
   }
-  else if(a==='open'){editing=t.dataset.id;render();window.scrollTo(0,0)}
+  else if(a==='open'){editing=t.dataset.id;render();$('#app').scrollTop=0}
   else if(a==='back'){editing=null;render()}
   else if(a==='addex'){openSheet()}
   else if(a==='close'){closeSheet()}
@@ -569,6 +571,22 @@ document.addEventListener('change',e=>{
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&tab==='today'&&!editing&&(!document.activeElement||document.activeElement===document.body))render();
 });
+
+/* клавиатура: страница не двигается, рабочая область сжимается до видимой части */
+const vv=window.visualViewport;
+function fitViewport(){
+  if(!vv)return;
+  document.body.style.height=vv.height+'px';
+  document.body.style.top=vv.offsetTop+'px';
+  document.body.classList.toggle('kb',vv.height<window.innerHeight-120);
+  window.scrollTo(0,0);
+}
+if(vv){vv.addEventListener('resize',fitViewport);vv.addEventListener('scroll',fitViewport)}
+document.addEventListener('focusin',e=>{
+  const el=e.target;
+  if(el.matches('input,textarea')&&!el.closest('#sheet'))setTimeout(()=>el.scrollIntoView({block:'center',behavior:'smooth'}),300);
+});
+fitViewport();
 
 render();
 navigator.storage?.persist?.();
