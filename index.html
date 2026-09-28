@@ -189,6 +189,7 @@ const fmtInt=n=>Math.round(n).toLocaleString('ru-RU');
 
 /* ---------- данные ---------- */
 const KEY='zhurnal.v1';
+const VERSION='1.6';
 const STRENGTH_GROUPS=['Грудь','Спина','Ноги','Плечи','Бицепс','Трицепс','Пресс','Другое'];
 const ALL_GROUPS=[...STRENGTH_GROUPS,'Кардио'];
 const SEED=[
@@ -449,7 +450,9 @@ function moreHTML(){
         <button class="ico" data-a="exdel" data-id="${e.id}" aria-label="Удалить">×</button></div>`).join('');
     }).join('')}
     <p class="mute">Новые упражнения добавляются прямо во время тренировки. Группу мышц можно поменять здесь.</p></section>
-    <section class="box"><button class="danger" data-a="wipe">Стереть все данные</button></section>`;
+    <section class="box"><button class="danger" data-a="wipe">Стереть все данные</button></section>
+    <section class="box"><h2>Приложение</h2><p class="mute">Версия ${VERSION}</p>
+    <button class="btn ghost" data-a="update">Проверить обновление</button></section>`;
 }
 
 function render(){
@@ -531,6 +534,25 @@ async function exportData(){
   setTimeout(()=>URL.revokeObjectURL(a.href),4000);
   db.lastBackup=Date.now();save();render();
 }
+async function hardReload(){
+  try{
+    const regs=await navigator.serviceWorker.getRegistrations();
+    await Promise.all(regs.map(r=>r.unregister()));
+    const ks=await caches.keys();
+    await Promise.all(ks.map(k=>caches.delete(k)));
+  }catch(e){}
+  location.replace(location.pathname+'?u='+Date.now());   // новый адрес, значит без старого кэша
+}
+async function checkUpdate(){
+  toast('Проверяю…');
+  try{
+    const r=await fetch('index.html?'+Date.now(),{cache:'no-store'});
+    const m=(await r.text()).match(/const VERSION='([^']+)'/);
+    const remote=m&&m[1];
+    if(remote&&remote!==VERSION){toast(`Найдена версия ${remote}, обновляю…`);setTimeout(hardReload,900);return}
+    toast(remote?`Установлена последняя версия ${VERSION}`:'Не удалось прочитать версию на сервере');
+  }catch(e){toast('Нет связи с сервером')}
+}
 function importFile(f){
   if(!f)return;
   f.text().then(t=>{
@@ -601,6 +623,7 @@ document.addEventListener('click',e=>{
     if(confirm('Удалить эту тренировку целиком?')){db.workouts=db.workouts.filter(x=>x.id!==w.id);save();editing=null;render()}
   }
   else if(a==='export'){exportData()}
+  else if(a==='update'){checkUpdate()}
   else if(a==='exrename'){
     const ex=exById(t.dataset.id),n=prompt('Новое название',ex.name);
     if(n&&n.trim()){ex.name=n.trim();save();render()}
@@ -648,6 +671,15 @@ document.addEventListener('visibilitychange',()=>{
 /* запрет масштабирования: щипок двумя пальцами (двойной тап закрыт через touch-action в CSS) */
 ['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
 document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+let lastEnd=0;
+document.addEventListener('touchend',e=>{
+  const now=Date.now();
+  if(now-lastEnd<350&&!e.target.closest('input,textarea,select')){
+    e.preventDefault();                                   // браузер не увидит двойной тап, значит не увеличит
+    e.target.closest('button,label,[data-a],[data-tab]')?.click(); // а отменённый клик выполняем вручную
+  }
+  lastEnd=now;
+},{passive:false});
 
 /* клавиатура: страница не двигается, рабочая область сжимается до видимой части */
 const vv=window.visualViewport;
