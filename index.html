@@ -190,6 +190,19 @@ nav{flex:none;background:var(--paper);border-top:1px solid var(--line);
 .gb i{display:block;height:100%;background:var(--iron)}
 .gb b{text-align:right;font-variant-numeric:tabular-nums}
 
+.rest{background:var(--paper);border-radius:10px;padding:8px 10px;margin:6px 0 4px}
+.rest b{font-size:13px}
+.rest .chips{display:flex;flex-wrap:wrap;gap:6px;margin:5px 0 3px}
+.rest .chips span{background:#FDE7E5;color:#9C2019;border-radius:12px;padding:2px 10px;font-weight:650;font-size:14px}
+.rest small{display:block;color:var(--mute);font-size:12px}
+.rest.ok b{color:#2E6B3B}
+.sw,.swrow{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
+.sw span,.swrow>span{flex:1;min-width:0}
+.swrow[hidden]{display:none}
+.sw input{-webkit-appearance:none;appearance:none;flex:none;width:48px;height:28px;border-radius:14px;background:#CFC9BE;position:relative;margin:0;transition:background .15s}
+.sw input::after{content:"";position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s}
+.sw input:checked{background:var(--iron)}
+.sw input:checked::after{transform:translateX(20px)}
 .backup{background:#FFF4D6;border:1.5px solid var(--gold);border-radius:12px;padding:12px 14px;margin:0 0 14px}
 .backup b{font-family:var(--num);font-size:20px}
 .backup p{margin:4px 0 0;font-size:14px}
@@ -230,7 +243,7 @@ const fmtInt=n=>Math.round(n).toLocaleString('ru-RU');
 
 /* ---------- данные ---------- */
 const KEY='zhurnal.v1';
-const VERSION='1.12';
+const VERSION='1.14';
 const STRENGTH_GROUPS=['Грудь','Спина','Ноги','Плечи','Бицепс','Трицепс','Пресс','Другое'];
 const ALL_GROUPS=[...STRENGTH_GROUPS,'Кардио'];
 const SEED=[
@@ -385,6 +398,7 @@ function editorHTML(w,canBack){
     <div class="date">${fmtLong(w.date)}</div>
     <input class="title" data-f="name" placeholder="Название, например «Грудь и спина»" value="${esc(w.name)}">
     <div id="totals">${totalsText(totals(w))}</div>
+    ${tab==='today'?restHTML(w):''}
     ${w.entries.map((en,i)=>entryHTML(w,en,i)).join('')}
     <div class="addrow"><button class="add" data-a="addex">+ Упражнение</button><button class="add alt" data-a="tplsheet">Из шаблона</button></div>
     <textarea data-f="note" placeholder="Заметка к тренировке: самочувствие, сон, что поменять в следующий раз">${esc(w.note)}</textarea>
@@ -396,6 +410,32 @@ function newDateHTML(){
   const y=new Date();y.setDate(y.getDate()-1);
   return `<div class="newdate"><label>Тренировка за другую дату<input type="date" id="nd" value="${toStr(y)}"></label>
     <button class="btn ghost" data-a="newdate">Создать</button></div>`;
+}
+const MUSCLE_GROUPS=STRENGTH_GROUPS.filter(g=>g!=='Другое');   // «Другое» и кардио в сводке не участвуют
+const REST_MAX=10;
+const cfg=()=>{const c=db.settings||{};return{restHint:c.restHint!==false,restCount:Math.min(REST_MAX,Math.max(1,Math.round(+c.restCount)||2))}};
+function setCfg(k,v){db.settings=Object.assign({},db.settings,{[k]:v});save()}
+/* w — текущая тренировка; null — стартовый экран (считаем от сегодняшнего дня) */
+function restInfo(w){
+  const ref=w?w.date:todayStr();
+  const before=x=>w?(x.date<ref||(x.date===ref&&x.created<w.created)):x.date<=ref;
+  const prev=byDateDesc().filter(x=>(!w||x.id!==w.id)&&before(x)&&x.entries.some(e=>exById(e.ex)&&hasData(e))).slice(0,cfg().restCount);
+  if(!prev.length)return null;
+  const loaded=new Set();
+  prev.forEach(x=>x.entries.forEach(e=>{const ex=exById(e.ex);if(ex&&ex.type==='s'&&hasData(e))loaded.add(groupOf(ex))}));
+  return{dates:prev.map(x=>x.date),missing:MUSCLE_GROUPS.filter(g=>!loaded.has(g))};
+}
+function whenText(k){
+  if(k===1)return 'прошлую тренировку';
+  return k<=4?['','','две','три','четыре'][k]+' прошлые тренировки':k+' прошлых тренировок';
+}
+function restHTML(w){
+  if(!cfg().restHint)return '';
+  const r=restInfo(w);if(!r)return '';
+  const when=whenText(r.dates.length);
+  const dates=r.dates.length>3?`с ${fmtMid(r.dates[r.dates.length-1])} по ${fmtMid(r.dates[0])}`:r.dates.map(fmtMid).join(', ');
+  if(!r.missing.length)return `<div class="rest ok"><b>За ${when} нагружены все группы мышц</b><small>${dates}</small></div>`;
+  return `<div class="rest"><b>Не нагружались за ${when}</b><div class="chips">${r.missing.map(g=>`<span>${g}</span>`).join('')}</div><small>Учтены тренировки: ${dates}</small></div>`;
 }
 const groupsText=w=>[...new Set(w.entries.map(e=>exById(e.ex)).filter(Boolean).map(groupOf))].join(', ');
 const DAY=864e5,BACKUP_EVERY=14*DAY;
@@ -416,6 +456,7 @@ function backupBannerHTML(){
 function startHTML(){
   const last=byDateDesc()[0];
   return `<div class="date">${fmtLong(todayStr())}</div>
+    ${restHTML(null)}
     <div class="start"><p class="lead">Сегодня тренировки ещё нет.</p>
     <button class="btn big" data-a="start">Начать тренировку</button>
     <button class="btn ghost" data-a="tplsheet">Начать по шаблону</button>
@@ -518,7 +559,13 @@ function progressHTML(){
 function moreHTML(){
   const last=db.lastBackup?`Последняя копия: ${new Date(db.lastBackup).toLocaleDateString('ru-RU',{day:'numeric',month:'long'})}.`:'Копию ещё не сохраняли.';
   const exs=[...db.exercises].sort((a,b)=>a.type.localeCompare(b.type)||a.name.localeCompare(b.name,'ru'));
+  const c=cfg();
   return `<h1 class="h1">Ещё</h1>
+    <section class="box"><h2>Настройки</h2>
+    <label class="sw"><span>Подсказывать не нагруженные группы</span><input type="checkbox" id="resthint"${c.restHint?' checked':''}></label>
+    <div class="swrow" id="restcnt"${c.restHint?'':' hidden'}><span>Сколько прошлых тренировок анализировать</span>
+      <div class="step"><button class="ib2" data-a="rcdec" aria-label="Меньше">−</button><span id="rcval">${c.restCount}</span><button class="ib2" data-a="rcinc" aria-label="Больше">+</button></div></div>
+    <p class="mute">На вкладке «Сегодня» показывает группы мышц, которые не нагружались в последних тренировках.</p></section>
     <section class="box"><h2>Резервная копия</h2>
     <p class="mute">Данные хранятся только в этом телефоне. Если удалить приложение или очистить данные Safari, они пропадут. Сохраняй копию раз в пару недель в «Файлы» или отправляй себе.</p>
     <p class="mute">${last}</p>
@@ -808,6 +855,10 @@ document.addEventListener('click',e=>{
   else if(a==='delw'&&w){
     if(confirm('Удалить эту тренировку целиком?')){db.workouts=db.workouts.filter(x=>x.id!==w.id);save();editing=null;render()}
   }
+  else if(a==='rcinc'||a==='rcdec'){
+    const n=Math.min(REST_MAX,Math.max(1,cfg().restCount+(a==='rcinc'?1:-1)));
+    setCfg('restCount',n);const v=$('#rcval');if(v)v.textContent=n;
+  }
   else if(a==='export'){exportData()}
   else if(a==='update'){checkUpdate()}
   else if(a==='snooze'){db.snoozeUntil=Date.now()+3*DAY;save();render();toast('Напомню через 3 дня')}
@@ -822,7 +873,7 @@ document.addEventListener('click',e=>{
     if(confirm(`Удалить «${ex.name}» из списка?`)){db.exercises=db.exercises.filter(x=>x.id!==ex.id);save();render()}
   }
   else if(a==='wipe'){
-    if(confirm('Стереть все тренировки и упражнения? Это нельзя отменить.')){db=fresh();save();editing=null;render();toast('Данные стёрты')}
+    if(confirm('Стереть все тренировки и упражнения? Это нельзя отменить.')){const st=db.settings;db=fresh();if(st)db.settings=st;save();editing=null;render();toast('Данные стёрты')}
   }
 });
 document.addEventListener('input',e=>{
@@ -854,6 +905,7 @@ document.addEventListener('change',e=>{
   else if(el.id==='progsel'){progEx=el.value;render()}
   else if(el.dataset.gsel){const ex=exById(el.dataset.gsel);if(ex){ex.group=el.value;save();render()}}
   else if(el.id==='imp'){importFile(el.files[0]);el.value=''}
+  else if(el.id==='resthint'){setCfg('restHint',el.checked);const r=$('#restcnt');if(r)r.hidden=!el.checked}
 });
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&tab==='today'&&!editing&&(!document.activeElement||document.activeElement===document.body))render();
