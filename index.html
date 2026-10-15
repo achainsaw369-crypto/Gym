@@ -62,7 +62,6 @@ button{cursor:pointer}
 .sethead{color:var(--mute);font-size:11px;text-align:center;margin-bottom:2px}
 .set.l,.sethead.l{grid-template-columns:24px 1fr 56px 1fr 34px}
 .kgref{font-size:12px;line-height:1.1;color:var(--mute);text-align:center;font-variant-numeric:tabular-nums}
-.uc{display:flex;justify-content:center}
 .set{margin:4px 0}
 .n{width:24px;height:24px;display:grid;place-items:center;color:var(--mute);font-size:13px;font-variant-numeric:tabular-nums}
 .n.pr{background:var(--gold);color:var(--ink);border-radius:50%;font-size:13px}
@@ -80,10 +79,26 @@ button{cursor:pointer}
 .pace{font-size:13px;color:var(--blue);font-weight:600;margin-top:5px;min-height:18px;font-variant-numeric:tabular-nums}
 
 /* переключатель кг / lbs в шапке столбца веса */
-.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:7px;overflow:hidden}
+.seg{display:inline-flex;flex:none;border:1.5px solid var(--ink);border-radius:7px;overflow:hidden}
 .seg button{border:0;background:transparent;padding:0 9px;min-width:38px;height:26px;font-weight:650;font-size:12px;color:var(--ink)}
 .seg button.on{background:var(--ink);color:#fff}
 
+.addrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:2px 0 14px}
+.addrow .add{margin:0;padding:13px 6px}
+.add.alt{border-style:dashed}
+.stitle{flex:1;font-family:var(--num);font-weight:800;font-size:22px}
+.tprow{display:block;width:100%;text-align:left;border:0;background:none;padding:12px 4px;border-bottom:1px solid var(--line)}
+.tprow b{display:block;font-size:17px}
+.tprow span{font-size:13px;color:var(--mute)}
+.tpi{display:flex;align-items:center;gap:4px;background:var(--paper);border-left:6px solid var(--iron);border-radius:0 10px 10px 0;padding:6px 6px 6px 10px;margin:6px 0}
+.tpi.c{border-left-color:var(--blue)}
+.tpn{flex:1;min-width:0;line-height:1.2}
+.tpn b{display:block;font-size:15px}
+.tpn small{color:var(--mute);font-size:12px}
+.step{display:flex;align-items:center;gap:2px;font-weight:700;font-variant-numeric:tabular-nums}
+.step span{min-width:20px;text-align:center}
+.ib2{width:30px;height:32px;border:0;border-radius:8px;background:var(--chalk);font-size:16px;color:var(--ink);padding:0}
+.ib2:disabled{opacity:.3}
 .add{width:100%;padding:15px;border:2px solid var(--ink);border-radius:12px;background:transparent;font-weight:700;margin:2px 0 14px}
 textarea{width:100%;min-height:70px;border:1.5px solid var(--line);border-radius:10px;background:#fff;padding:10px;resize:vertical}
 .foot{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:12px}
@@ -215,7 +230,7 @@ const fmtInt=n=>Math.round(n).toLocaleString('ru-RU');
 
 /* ---------- данные ---------- */
 const KEY='zhurnal.v1';
-const VERSION='1.11';
+const VERSION='1.12';
 const STRENGTH_GROUPS=['Грудь','Спина','Ноги','Плечи','Бицепс','Трицепс','Пресс','Другое'];
 const ALL_GROUPS=[...STRENGTH_GROUPS,'Кардио'];
 const SEED=[
@@ -234,12 +249,13 @@ const SEED=[
 ];
 const GROUP_OF={};SEED.forEach(([n,,g])=>GROUP_OF[n.toLowerCase()]=g);
 const groupOf=e=>e.type==='c'?'Кардио':(STRENGTH_GROUPS.includes(e.group)?e.group:'Другое');
-const fresh=()=>({v:3,exercises:SEED.map(([name,type,group])=>({id:uid(),name,type,group})),workouts:[],lastBackup:null});
+const fresh=()=>({v:3,templates:[],exercises:SEED.map(([name,type,group])=>({id:uid(),name,type,group})),workouts:[],lastBackup:null});
 let db=(()=>{try{const j=JSON.parse(localStorage.getItem(KEY));if(j&&Array.isArray(j.workouts)&&Array.isArray(j.exercises))return j}catch(e){}return fresh()})();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('Не удалось сохранить: память браузера недоступна')}}
 /* старые данные: проставить группы и один раз добавить новые упражнения из списка */
 function migrate(){
   let ch=false;
+  if(!Array.isArray(db.templates)){db.templates=[];ch=true}
   db.exercises.forEach(e=>{if(!e.group){e.group=e.type==='c'?'Кардио':(GROUP_OF[e.name.toLowerCase()]||'Другое');ch=true}});
   if((db.v||1)<2){
     SEED.forEach(([name,type,group])=>{if(!db.exercises.some(e=>e.name.toLowerCase()===name.toLowerCase()))db.exercises.push({id:uid(),name,type,group})});
@@ -328,7 +344,7 @@ function isPR(w,en,j){
 }
 
 /* ---------- состояние экрана ---------- */
-let tab='today',editing=null,curId=null,progEx=null,pickQ='';
+let tab='today',editing=null,curId=null,progEx=null,pickQ='',tplEditing=null,sheetMode='workout';
 
 /* ---------- шаблоны ---------- */
 function entryHTML(w,en,i){
@@ -337,6 +353,7 @@ function entryHTML(w,en,i){
   const exo=exById(en.ex),grp=exo?groupOf(exo)+'. ':'';
   const lastLine=grp+(l?`Прошлый раз, ${fmtMid(l.date)}: ${type==='s'?setsTextU(l.en,u):cardioText(l.en)}`:'Раньше не выполнялось');
   const pn=lastNote(en.ex,w);
+  const seg=type==='s'?`<div class="seg" role="group" aria-label="Единицы веса"><button data-a="unit" data-u="kg" class="${lb?'':'on'}" aria-pressed="${!lb}">кг</button><button data-a="unit" data-u="lb" class="${lb?'on':''}" aria-pressed="${lb}">lbs</button></div>`:'';
   let body;
   if(type==='s'){
     const rows=(en.sets||[]).map((s,j)=>{
@@ -348,8 +365,7 @@ function entryHTML(w,en,i){
         <input inputmode="numeric" data-f="r" placeholder="0" value="${s.r??''}" aria-label="Повторы">
         <button class="ico" data-a="delset" aria-label="Убрать подход">−</button></div>`;
     }).join('');
-    const seg=`<div class="seg" role="group" aria-label="Единицы веса"><button data-a="unit" data-u="kg" class="${lb?'':'on'}" aria-pressed="${!lb}">кг</button><button data-a="unit" data-u="lb" class="${lb?'on':''}" aria-pressed="${lb}">lbs</button></div>`;
-    body=`<div class="sethead${lb?' l':''}"><span></span><span class="uc">${seg}</span>${lb?'<span>≈ кг</span>':''}<span>повторы</span><span></span></div>${rows}
+    body=`<div class="sethead${lb?' l':''}"><span></span><span>${uLabel(u)}</span>${lb?'<span>≈ кг</span>':''}<span>повторы</span><span></span></div>${rows}
       <button class="addset" data-a="addset">+ Подход</button>`;
   }else{
     body=`<div class="cardio">
@@ -360,7 +376,7 @@ function entryHTML(w,en,i){
   const prev=pn?`<div class="pnote" data-a="pnote"><div class="pt"><b>${fmtMid(pn.date)}:</b> ${esc(pn.text)}</div><button class="pbtn" data-a="pnote" aria-label="Предыдущий комментарий полностью">▾</button></div>`:'';
   const cmt=`<textarea class="cmt" rows="1" data-f="enote" placeholder="Заметка к упражнению" aria-label="Заметка к упражнению">${esc(en.note||'')}</textarea>`;
   return `<section class="ex ${type}" data-e="${i}">
-    <div class="exhead"><h3>${esc(exName(en.ex))}</h3><button class="ico" data-a="delex" aria-label="Убрать упражнение">×</button></div>
+    <div class="exhead"><h3>${esc(exName(en.ex))}</h3>${seg}<button class="ico" data-a="delex" aria-label="Убрать упражнение">×</button></div>
     <p class="last">${esc(lastLine)}</p>${prev}${body}${cmt}</section>`;
 }
 function editorHTML(w,canBack){
@@ -370,8 +386,9 @@ function editorHTML(w,canBack){
     <input class="title" data-f="name" placeholder="Название, например «Грудь и спина»" value="${esc(w.name)}">
     <div id="totals">${totalsText(totals(w))}</div>
     ${w.entries.map((en,i)=>entryHTML(w,en,i)).join('')}
-    <button class="add" data-a="addex">+ Добавить упражнение</button>
+    <div class="addrow"><button class="add" data-a="addex">+ Упражнение</button><button class="add alt" data-a="tplsheet">Из шаблона</button></div>
     <textarea data-f="note" placeholder="Заметка к тренировке: самочувствие, сон, что поменять в следующий раз">${esc(w.note)}</textarea>
+    <button class="btn ghost" data-a="savetpl">Сохранить как шаблон</button>
     <div class="foot"><label>Дата <input type="date" data-f="date" value="${w.date}"></label>
     <button class="danger" data-a="delw">Удалить тренировку</button></div>`;
 }
@@ -401,6 +418,7 @@ function startHTML(){
   return `<div class="date">${fmtLong(todayStr())}</div>
     <div class="start"><p class="lead">Сегодня тренировки ещё нет.</p>
     <button class="btn big" data-a="start">Начать тренировку</button>
+    <button class="btn ghost" data-a="tplsheet">Начать по шаблону</button>
     ${last?`<button class="btn ghost" data-a="repeat">Повторить прошлую: ${esc(last.name||fmtMid(last.date))}</button>`:''}</div>
     ${newDateHTML()}
     ${db.workouts.length?'':'<p class="mute">Добавляй упражнения: для силовых вносишь вес и повторы, для кардио дистанцию и время. Результаты прошлых тренировок подсказываются автоматически.</p>'}`;
@@ -506,6 +524,11 @@ function moreHTML(){
     <p class="mute">${last}</p>
     <button class="btn" data-a="export">Сохранить копию</button>
     <label class="btn ghost">Загрузить копию<input id="imp" type="file" accept="application/json,.json" hidden></label></section>
+    <section class="box"><h2>Шаблоны тренировок</h2>
+    ${db.templates.length?db.templates.map(t=>`<div class="exrow"><span>${esc(t.name)} <small class="mute">· ${t.items.length} упр.</small></span>
+      <button class="ico" data-a="tpledit" data-id="${t.id}" aria-label="Редактировать шаблон">✎</button>
+      <button class="ico" data-a="tpldel" data-id="${t.id}" aria-label="Удалить шаблон">×</button></div>`).join(''):'<p class="mute">Шаблонов пока нет. Сохрани любую тренировку кнопкой «Сохранить как шаблон» или создай новый здесь.</p>'}
+    <button class="btn ghost" data-a="tplnew">+ Новый шаблон</button></section>
     <section class="box"><h2>Упражнения</h2>
     ${ALL_GROUPS.map(g=>{
       const it=db.exercises.filter(e=>groupOf(e)===g).sort((x,y)=>x.name.localeCompare(y.name,'ru'));
@@ -521,6 +544,24 @@ function moreHTML(){
     <button class="btn ghost" data-a="update">Проверить обновление</button></section>`;
 }
 
+function tplEditorHTML(t){
+  const n=t.items.length;
+  const rows=t.items.map((it,i)=>{
+    const ex=exById(it.ex),type=ex?ex.type:'s';
+    return `<div class="tpi ${type}" data-i="${i}"><div class="tpn"><b>${esc(exName(it.ex))}</b><small>${ex?groupOf(ex):''}</small></div>
+      ${type==='s'?`<div class="step"><button class="ib2" data-a="tpdec" aria-label="Меньше подходов">−</button><span>${it.sets||1}</span><button class="ib2" data-a="tpinc" aria-label="Больше подходов">+</button></div>`:''}
+      <button class="ib2" data-a="tpup"${i===0?' disabled':''} aria-label="Выше">↑</button>
+      <button class="ib2" data-a="tpdown"${i===n-1?' disabled':''} aria-label="Ниже">↓</button>
+      <button class="ib2" data-a="tpdelitem" aria-label="Убрать из шаблона">×</button></div>`;
+  }).join('');
+  return `<button class="back" data-a="tpback">‹ Ещё</button>
+    <h1 class="h1">Шаблон</h1>
+    <input class="title" data-f="tname" placeholder="Название шаблона" value="${esc(t.name)}">
+    <p class="mute">Для силовых упражнений число — сколько пустых подходов появится в тренировке.</p>
+    ${rows||'<p class="mute">Пока пусто. Добавь упражнения.</p>'}
+    <button class="add" data-a="tpaddex">+ Добавить упражнение</button>
+    <button class="danger" data-a="tpldelete">Удалить шаблон</button>`;
+}
 function render(){
   let html='';curId=null;
   if(tab==='today'){
@@ -531,7 +572,7 @@ function render(){
     const w=editing&&wById(editing);
     html=w?editorHTML(w,true):historyHTML();
   }else if(tab==='progress')html=progressHTML();
-  else html=moreHTML();
+  else{const tp=tplEditing&&db.templates.find(x=>x.id===tplEditing);html=tp?tplEditorHTML(tp):moreHTML()}
   $('#app').innerHTML=html;
   $$('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   fitNotes();markOverflow();
@@ -555,7 +596,42 @@ function updateStars(sec,w,en){
 }
 
 /* ---------- выбор упражнения ---------- */
-function openSheet(){
+function openTplSheet(){
+  const s=document.createElement('div');s.id='sheet';
+  const rows=db.templates.map(t=>{
+    const names=t.items.map(it=>exName(it.ex));
+    return `<button class="tprow" data-a="tplpick" data-id="${t.id}"><b>${esc(t.name)}</b><span>${esc(names.slice(0,4).join(', '))}${names.length>4?'…':''} · ${names.length} упр.</span></button>`;
+  }).join('');
+  s.innerHTML=`<div class="sbar"><div class="stitle">Шаблоны тренировок</div><button data-a="close">Отмена</button></div><div id="plist">${rows||'<p class="mute">Шаблонов пока нет. Сохрани любую тренировку кнопкой «Сохранить как шаблон» или создай шаблон в разделе «Ещё».</p>'}</div>`;
+  document.body.appendChild(s);
+}
+function applyTemplate(tid,w){
+  const t=db.templates.find(x=>x.id===tid);if(!t)return;
+  let target=w;
+  if(!target){target={id:uid(),created:Date.now(),date:todayStr(),name:t.name,note:'',entries:[]};db.workouts.push(target)}
+  let added=0;
+  for(const it of t.items){
+    const ex=exById(it.ex);
+    if(!ex||target.entries.some(e=>e.ex===it.ex))continue;
+    target.entries.push(ex.type==='s'
+      ?{id:uid(),ex:it.ex,sets:Array.from({length:Math.max(1,it.sets||1)},()=>({w:null,r:null}))}
+      :{id:uid(),ex:it.ex,km:null,min:null});
+    added++;
+  }
+  if(!target.name)target.name=t.name;
+  save();closeSheet();
+  if(!w){tab='today';editing=null}
+  const st=$('#app').scrollTop;render();$('#app').scrollTop=w?st:0;
+  toast(added?`Добавлено из шаблона: ${added}`:'Все упражнения шаблона уже есть в тренировке');
+}
+function addTplItem(exId){
+  const tp=db.templates.find(x=>x.id===tplEditing);if(!tp)return;
+  closeSheet();
+  if(tp.items.some(i=>i.ex===exId)){toast('Это упражнение уже есть в шаблоне');return}
+  tp.items.push({ex:exId,sets:exType(exId)==='s'?3:0});save();
+  const st=$('#app').scrollTop;render();$('#app').scrollTop=st;
+}
+function openSheet(mode){sheetMode=mode||'workout';
   const s=document.createElement('div');s.id='sheet';
   s.innerHTML='<div class="sbar"><input id="q" type="text" placeholder="Найти или добавить упражнение" autocomplete="off"><button data-a="close">Отмена</button></div><div id="plist"></div>';
   document.body.appendChild(s);pickQ='';renderPick();$('#q').focus();
@@ -636,6 +712,7 @@ function importFile(f){
       });
       const ids=new Set(db.workouts.map(w=>w.id));let n=0;
       j.workouts.forEach(w=>{if(ids.has(w.id))return;w.entries.forEach(en=>en.ex=map[en.ex]||en.ex);db.workouts.push(w);n++});
+      (j.templates||[]).forEach(tp=>{if(db.templates.some(x=>x.id===tp.id))return;tp.items.forEach(it=>it.ex=map[it.ex]||it.ex);db.templates.push(tp)});
       migrate();save();render();toast(`Добавлено тренировок: ${n}`);
     }catch(e){toast('Это не файл копии журнала')}
   });
@@ -650,7 +727,7 @@ function toast(m){
 /* ---------- события ---------- */
 document.addEventListener('click',e=>{
   const t=e.target.closest('[data-tab],[data-a]');if(!t)return;
-  if(t.dataset.tab){tab=t.dataset.tab;editing=null;closeSheet();render();$('#app').scrollTop=0;return}
+  if(t.dataset.tab){tab=t.dataset.tab;editing=null;tplEditing=null;closeSheet();render();$('#app').scrollTop=0;return}
   const a=t.dataset.a,sec=t.closest('[data-e]');
   const w=curId&&wById(curId);
   const en=w&&sec?w.entries[+sec.dataset.e]:null;
@@ -673,11 +750,11 @@ document.addEventListener('click',e=>{
   else if(a==='back'){editing=null;render()}
   else if(a==='addex'){openSheet()}
   else if(a==='close'){closeSheet()}
-  else if(a==='pick'){addEntry(t.dataset.id)}
+  else if(a==='pick'){sheetMode==='tpl'?addTplItem(t.dataset.id):addEntry(t.dataset.id)}
   else if(a==='create'){
     let name=pickQ.trim();if(!name)return;
     name=name[0].toUpperCase()+name.slice(1);
-    const g=t.dataset.g,ex={id:uid(),name,type:g==='Кардио'?'c':'s',group:g};db.exercises.push(ex);save();addEntry(ex.id);
+    const g=t.dataset.g,ex={id:uid(),name,type:g==='Кардио'?'c':'s',group:g};db.exercises.push(ex);save();sheetMode==='tpl'?addTplItem(ex.id):addEntry(ex.id);
   }
   else if(a==='delex'&&en){
     if(confirm(`Убрать «${exName(en.ex)}» из тренировки?`)){w.entries.splice(+sec.dataset.e,1);save();render()}
@@ -694,6 +771,40 @@ document.addEventListener('click',e=>{
     if(unitOf(en,w)===t.dataset.u)return;
     en.unit=t.dataset.u;save();rerenderEntry(sec);
   }
+  else if(a==='tplsheet'){openTplSheet()}
+  else if(a==='tplpick'){applyTemplate(t.dataset.id,w||null)}
+  else if(a==='savetpl'&&w){
+    const items=w.entries.filter(x=>exById(x.ex)).map(x=>({ex:x.ex,sets:exType(x.ex)==='s'?Math.max(1,(x.sets||[]).length):0}));
+    if(!items.length){toast('В тренировке нет упражнений');return}
+    let name=prompt('Название шаблона',w.name||groupsText(w)||'Тренировка');
+    if(name==null)return;name=name.trim();if(!name)return;
+    const dup=db.templates.find(x=>x.name.toLowerCase()===name.toLowerCase());
+    if(dup){if(!confirm(`Шаблон «${dup.name}» уже есть. Заменить его?`))return;dup.items=items}
+    else db.templates.push({id:uid(),name,items});
+    save();toast(`Шаблон «${name}» сохранён`);
+  }
+  else if(a==='tplnew'){const nt={id:uid(),name:'Новый шаблон',items:[]};db.templates.push(nt);save();tplEditing=nt.id;render();$('#app').scrollTop=0}
+  else if(a==='tpledit'){tplEditing=t.dataset.id;render();$('#app').scrollTop=0}
+  else if(a==='tpldel'){
+    const tp=db.templates.find(x=>x.id===t.dataset.id);
+    if(tp&&confirm(`Удалить шаблон «${tp.name}»?`)){db.templates=db.templates.filter(x=>x.id!==tp.id);save();render()}
+  }
+  else if(a==='tpback'){tplEditing=null;render();$('#app').scrollTop=0}
+  else if(a==='tpaddex'){openSheet('tpl')}
+  else if(a==='tpldelete'){
+    const tp=db.templates.find(x=>x.id===tplEditing);
+    if(tp&&confirm(`Удалить шаблон «${tp.name}»?`)){db.templates=db.templates.filter(x=>x.id!==tp.id);save();tplEditing=null;render();$('#app').scrollTop=0}
+  }
+  else if(['tpinc','tpdec','tpup','tpdown','tpdelitem'].includes(a)){
+    const tp=db.templates.find(x=>x.id===tplEditing),row=t.closest('[data-i]');if(!tp||!row)return;
+    const i=+row.dataset.i,it=tp.items[i];
+    if(a==='tpinc')it.sets=Math.min(20,(it.sets||1)+1);
+    else if(a==='tpdec')it.sets=Math.max(1,(it.sets||1)-1);
+    else if(a==='tpup'&&i>0)[tp.items[i-1],tp.items[i]]=[tp.items[i],tp.items[i-1]];
+    else if(a==='tpdown'&&i<tp.items.length-1)[tp.items[i+1],tp.items[i]]=[tp.items[i],tp.items[i+1]];
+    else if(a==='tpdelitem')tp.items.splice(i,1);
+    save();const st=$('#app').scrollTop;render();$('#app').scrollTop=st;
+  }
   else if(a==='delw'&&w){
     if(confirm('Удалить эту тренировку целиком?')){db.workouts=db.workouts.filter(x=>x.id!==w.id);save();editing=null;render()}
   }
@@ -707,6 +818,7 @@ document.addEventListener('click',e=>{
   else if(a==='exdel'){
     const ex=exById(t.dataset.id);
     if(db.workouts.some(x=>x.entries.some(y=>y.ex===ex.id))){toast('Упражнение есть в истории, удалить нельзя');return}
+    if(db.templates.some(x=>x.items.some(y=>y.ex===ex.id))){toast('Упражнение есть в шаблоне, удалить нельзя');return}
     if(confirm(`Удалить «${ex.name}» из списка?`)){db.exercises=db.exercises.filter(x=>x.id!==ex.id);save();render()}
   }
   else if(a==='wipe'){
@@ -716,6 +828,7 @@ document.addEventListener('click',e=>{
 document.addEventListener('input',e=>{
   const el=e.target,f=el.dataset.f;
   if(el.id==='q'){pickQ=el.value;renderPick();return}
+  if(f==='tname'){const tp=db.templates.find(x=>x.id===tplEditing);if(tp){tp.name=el.value;save()}return}
   if(!f||!curId)return;
   const w=wById(curId);if(!w)return;
   if(f==='name')w.name=el.value;
