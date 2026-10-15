@@ -170,8 +170,13 @@ nav{flex:none;background:var(--paper);border-top:1px solid var(--line);
 .sbar button{border:0;background:none;color:var(--blue);font-weight:600;padding:8px 0}
 #plist{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:0 16px calc(12px + env(safe-area-inset-bottom))}
 .pick{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:0;background:none;padding:13px 4px;border-bottom:1px solid var(--line);font-size:17px}
-.create{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0;border-bottom:2px solid var(--ink);font-weight:650}
-.create div{flex:1 0 100%}
+.createbtn{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:2px dashed var(--iron);border-radius:12px;background:#fff;color:var(--ink);padding:12px;margin:10px 0 4px;font-size:17px;font-weight:650}
+.createbtn b{flex:none;width:26px;height:26px;border-radius:50%;background:var(--iron);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;line-height:1}
+.createbtn span{flex:1;min-width:0;overflow-wrap:anywhere}
+.newex{padding:6px 0}
+.newex .back{border:0;background:none;color:var(--iron);font-size:16px;font-weight:650;padding:8px 0}
+.newex h3{font-family:var(--num);font-size:22px;margin:4px 0 2px}
+.newex .nm{font-weight:650;font-size:17px;overflow-wrap:anywhere;margin:0 0 2px}
 .chip{border:0;border-radius:20px;padding:9px 16px;color:#fff;font-weight:650}
 .chip.s{background:var(--iron)} .chip.c{background:var(--blue)}
 
@@ -196,6 +201,12 @@ nav{flex:none;background:var(--paper);border-top:1px solid var(--line);
 .rest .chips span{background:#FDE7E5;color:#9C2019;border-radius:12px;padding:2px 10px;font-weight:650;font-size:14px}
 .rest small{display:block;color:var(--mute);font-size:12px}
 .rest.ok b{color:#2E6B3B}
+.thanks{border-left:3px solid var(--iron);padding:2px 0 2px 10px;margin:0 0 14px;font-size:13px;line-height:1.4;color:var(--mute)}
+.thanks a{color:var(--ink);font-weight:650;text-decoration:underline;text-underline-offset:2px}
+.thanks .qrbtn{background:none;border:0;padding:4px 0 0;font:inherit;font-weight:650;color:var(--ink);text-decoration:underline;text-underline-offset:2px;display:block}
+.thanks .qrbox{margin-top:8px;text-align:center}
+.thanks .qrbox[hidden]{display:none}
+.thanks .qrbox img{width:200px;height:200px;image-rendering:pixelated;background:#fff;padding:8px;border-radius:10px;border:1px solid var(--line)}
 .sw,.swrow{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)}
 .sw span,.swrow>span{flex:1;min-width:0}
 .swrow[hidden]{display:none}
@@ -243,7 +254,7 @@ const fmtInt=n=>Math.round(n).toLocaleString('ru-RU');
 
 /* ---------- данные ---------- */
 const KEY='zhurnal.v1';
-const VERSION='1.14';
+const VERSION='1.16';
 const STRENGTH_GROUPS=['Грудь','Спина','Ноги','Плечи','Бицепс','Трицепс','Пресс','Другое'];
 const ALL_GROUPS=[...STRENGTH_GROUPS,'Кардио'];
 const SEED=[
@@ -357,7 +368,7 @@ function isPR(w,en,j){
 }
 
 /* ---------- состояние экрана ---------- */
-let tab='today',editing=null,curId=null,progEx=null,pickQ='',tplEditing=null,sheetMode='workout';
+let pickNew=false,tab='today',editing=null,curId=null,progEx=null,pickQ='',tplEditing=null,sheetMode='workout';
 
 /* ---------- шаблоны ---------- */
 function entryHTML(w,en,i){
@@ -412,6 +423,8 @@ function newDateHTML(){
     <button class="btn ghost" data-a="newdate">Создать</button></div>`;
 }
 const MUSCLE_GROUPS=STRENGTH_GROUPS.filter(g=>g!=='Другое');   // «Другое» и кардио в сводке не участвуют
+const DONATE_URL='https://www.tbank-online.com/rm/r_TdmslDmFjB.fuBUyINwKo/RUnFB25791';
+const QR_IMG='data:image/png;base64,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';
 const REST_MAX=10;
 const cfg=()=>{const c=db.settings||{};return{restHint:c.restHint!==false,restCount:Math.min(REST_MAX,Math.max(1,Math.round(+c.restCount)||2))}};
 function setCfg(k,v){db.settings=Object.assign({},db.settings,{[k]:v});save()}
@@ -561,6 +574,9 @@ function moreHTML(){
   const exs=[...db.exercises].sort((a,b)=>a.type.localeCompare(b.type)||a.name.localeCompare(b.name,'ru'));
   const c=cfg();
   return `<h1 class="h1">Ещё</h1>
+    <div class="thanks">Финансовая благодарность не возбраняется и может быть направлена по <a href="${DONATE_URL}" target="_blank" rel="noopener noreferrer">ссылке</a>.
+      <button class="qrbtn" data-a="qr" aria-expanded="false">Показать QR-код</button>
+      <div class="qrbox" hidden><img src="${QR_IMG}" alt="QR-код для перевода"></div></div>
     <section class="box"><h2>Настройки</h2>
     <label class="sw"><span>Подсказывать не нагруженные группы</span><input type="checkbox" id="resthint"${c.restHint?' checked':''}></label>
     <div class="swrow" id="restcnt"${c.restHint?'':' hidden'}><span>Сколько прошлых тренировок анализировать</span>
@@ -681,7 +697,7 @@ function addTplItem(exId){
 function openSheet(mode){sheetMode=mode||'workout';
   const s=document.createElement('div');s.id='sheet';
   s.innerHTML='<div class="sbar"><input id="q" type="text" placeholder="Найти или добавить упражнение" autocomplete="off"><button data-a="close">Отмена</button></div><div id="plist"></div>';
-  document.body.appendChild(s);pickQ='';renderPick();$('#q').focus();
+  document.body.appendChild(s);pickQ='';pickNew=false;renderPick();$('#q').focus();
 }
 const closeSheet=()=>$('#sheet')?.remove();
 function renderPick(){
@@ -691,9 +707,15 @@ function renderPick(){
   const row=e=>`<button class="pick ${e.type}" data-a="pick" data-id="${e.id}"><i></i>${esc(e.name)}</button>`;
   const byUse=(a,b)=>(use[b.id]||0)-(use[a.id]||0)||a.name.localeCompare(b.name,'ru');
   let html='';
+  if(pickNew&&q){    // второй шаг: выбор группы для нового упражнения
+    $('#plist').innerHTML=`<div class="newex"><button class="back" data-a="newback">‹ Назад</button>
+      <h3>Новое упражнение</h3><p class="nm">«${esc(pickQ.trim())}»</p><p class="mute">В какую группу его добавить?</p></div>`+
+      ALL_GROUPS.map(g=>`<button class="pick ${g==='Кардио'?'c':'s'}" data-a="create" data-g="${g}"><i></i>${g}</button>`).join('');
+    return;
+  }
+  pickNew=false;
   if(q&&!db.exercises.some(e=>e.name.toLowerCase()===q)){
-    html+=`<div class="create"><div>Создать «${esc(pickQ.trim())}». Выбери группу:</div>
-      ${ALL_GROUPS.map(g=>`<button class="chip ${g==='Кардио'?'c':'s'}" data-a="create" data-g="${g}">${g}</button>`).join('')}</div>`;
+    html+=`<button class="createbtn" data-a="newex"><b>+</b><span>Создать «${esc(pickQ.trim())}»</span></button>`;
   }
   if(!q){
     const rec=db.exercises.filter(e=>use[e.id]).sort(byUse).slice(0,5);
@@ -798,6 +820,8 @@ document.addEventListener('click',e=>{
   else if(a==='addex'){openSheet()}
   else if(a==='close'){closeSheet()}
   else if(a==='pick'){sheetMode==='tpl'?addTplItem(t.dataset.id):addEntry(t.dataset.id)}
+  else if(a==='newex'){if(!pickQ.trim())return;pickNew=true;$('#q').blur();renderPick();$('#plist').scrollTop=0}
+  else if(a==='newback'){pickNew=false;renderPick();$('#q').focus()}
   else if(a==='create'){
     let name=pickQ.trim();if(!name)return;
     name=name[0].toUpperCase()+name.slice(1);
@@ -855,6 +879,10 @@ document.addEventListener('click',e=>{
   else if(a==='delw'&&w){
     if(confirm('Удалить эту тренировку целиком?')){db.workouts=db.workouts.filter(x=>x.id!==w.id);save();editing=null;render()}
   }
+  else if(a==='qr'){
+    const box=t.parentElement.querySelector('.qrbox'),show=box.hidden;
+    box.hidden=!show;t.textContent=show?'Скрыть QR-код':'Показать QR-код';t.setAttribute('aria-expanded',show);
+  }
   else if(a==='rcinc'||a==='rcdec'){
     const n=Math.min(REST_MAX,Math.max(1,cfg().restCount+(a==='rcinc'?1:-1)));
     setCfg('restCount',n);const v=$('#rcval');if(v)v.textContent=n;
@@ -878,7 +906,7 @@ document.addEventListener('click',e=>{
 });
 document.addEventListener('input',e=>{
   const el=e.target,f=el.dataset.f;
-  if(el.id==='q'){pickQ=el.value;renderPick();return}
+  if(el.id==='q'){pickQ=el.value;pickNew=false;renderPick();return}
   if(f==='tname'){const tp=db.templates.find(x=>x.id===tplEditing);if(tp){tp.name=el.value;save()}return}
   if(!f||!curId)return;
   const w=wById(curId);if(!w)return;
