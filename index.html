@@ -24,7 +24,7 @@ html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;backgrou
   font:16px/1.4 -apple-system,system-ui,"Helvetica Neue",sans-serif;-webkit-text-size-adjust:100%}
 body{position:fixed;left:0;right:0;top:0;display:flex;flex-direction:column}
 #app{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
-  padding:calc(14px + env(safe-area-inset-top)) max(16px,calc((100vw - 560px)/2)) 28px}
+  padding:calc(8px + env(safe-area-inset-top)) max(12px,calc((100vw - 560px)/2)) 28px}
 body.kb nav{display:none}
 button,input,textarea,select{font:inherit;color:inherit}
 input,textarea,select{font-size:16px}
@@ -34,36 +34,55 @@ button{cursor:pointer}
 
 /* заголовки */
 .date,.h1{font-family:var(--num);font-weight:800;font-size:34px;line-height:1.05;margin:4px 0 8px}
+.date{font-size:30px;margin:2px 0 4px}
 .date::first-letter{text-transform:uppercase}
 .h1{margin-bottom:14px}
 #totals{color:var(--mute);font-variant-numeric:tabular-nums;font-size:15px;min-height:22px}
-.title{width:100%;border:0;border-bottom:1.5px dashed var(--line);background:transparent;padding:6px 0;margin:2px 0 6px;font-size:17px}
+.title{width:100%;border:0;border-bottom:1.5px dashed var(--line);background:transparent;padding:4px 0;margin:0 0 4px;font-size:17px}
 .title:focus{outline:none;border-bottom-color:var(--ink)}
 .back{border:0;background:none;color:var(--blue);font-weight:600;padding:8px 0;font-size:16px}
 
-/* блок упражнения: цвет полосы = тип */
-.ex{background:var(--paper);border-left:6px solid var(--iron);border-radius:0 14px 14px 0;padding:12px 12px 12px 14px;margin:14px 0}
+/* блок упражнения: компактный, цвет полосы = тип */
+.ex{background:var(--paper);border-left:6px solid var(--iron);border-radius:0 12px 12px 0;padding:6px 8px 8px 10px;margin:8px 0}
 .ex.c{border-left-color:var(--blue)}
-.exhead{display:flex;align-items:center;justify-content:space-between}
-.exhead h3{font-family:var(--num);font-weight:800;font-size:24px;margin:0;letter-spacing:.01em}
-.last{color:var(--mute);font-size:13px;margin:0 0 8px;font-variant-numeric:tabular-nums}
+.exhead{display:flex;align-items:center;gap:6px;min-height:34px}
+.exhead h3{flex:1;min-width:0;font-family:var(--num);font-weight:800;font-size:19px;line-height:1.1;margin:0;letter-spacing:.01em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.eb{display:flex;gap:4px;flex:none}
+.ib{width:34px;height:34px;display:grid;place-items:center;border:0;border-radius:8px;background:var(--chalk);color:var(--ink);font-size:20px;line-height:1;padding:0}
+.ib:active{background:var(--line)}
+.ib.on{background:#FFE9A8}
+.ib.del{color:var(--iron)}
+.last{color:var(--mute);font-size:12px;line-height:1.3;margin:0 0 4px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnote{margin:0 0 5px;font-size:13px;line-height:1.3;color:#6B4F00;background:#FFF4D6;border-radius:6px;padding:2px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnote.open{white-space:normal}
 .ico{width:40px;height:40px;border:0;background:none;color:var(--mute);font-size:24px;line-height:1;border-radius:10px}
 .ico:active{background:var(--chalk)}
 
-.sethead,.set{display:grid;grid-template-columns:30px 1fr 1fr 40px;gap:8px;align-items:center}
-.sethead{color:var(--mute);font-size:12px;text-align:center;margin-bottom:2px}
-.set{margin:6px 0}
-.n{width:28px;height:28px;display:grid;place-items:center;color:var(--mute);font-size:14px;font-variant-numeric:tabular-nums}
-.n.pr{background:var(--gold);color:var(--ink);border-radius:50%;font-size:15px}
-.set input,.cardio input{width:100%;height:48px;border:1.5px solid var(--line);border-radius:10px;background:#fff;
-  text-align:center;font-family:var(--num);font-weight:700;font-size:24px;font-variant-numeric:tabular-nums}
-.set input:focus,.cardio input:focus{outline:none;border-color:var(--ink)}
-.addset{width:100%;padding:11px;border:1.5px dashed var(--line);background:none;border-radius:10px;font-weight:600;margin-top:6px}
-.ex.s .addset{color:var(--iron);border-color:#E9B3B0}
-.cardio{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.cardio label{font-size:13px;color:var(--mute);display:block}
-.cardio input{margin-top:4px}
-.pace{font-size:14px;color:var(--blue);font-weight:600;margin-top:8px;min-height:20px;font-variant-numeric:tabular-nums}
+.sets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 6px}
+.sc{position:relative;display:flex;align-items:center;gap:1px;min-width:0}
+.sc input,.cardio input{min-width:0;height:40px;border:1.5px solid var(--line);border-radius:8px;background:#fff;
+  text-align:center;font-family:var(--num);font-weight:700;font-size:20px;padding:0;font-variant-numeric:tabular-nums}
+.sc input[data-f=w]{flex:3}
+.sc input[data-f=r]{flex:2}
+.sc input::placeholder,.cardio input::placeholder{font-weight:500;font-size:13px;color:#A3A8A5}
+.sc input:focus,.cardio input:focus{outline:none;border-color:var(--ink)}
+.mul{flex:none;width:10px;text-align:center;color:var(--mute);font-size:13px}
+.pr{position:absolute;top:-7px;right:-3px;z-index:1;width:16px;height:16px;border-radius:50%;background:var(--gold);color:var(--ink);font-size:10px;line-height:16px;text-align:center;pointer-events:none}
+.cmt{display:block;width:100%;height:34px;margin-top:6px;border:0;border-bottom:1.5px dashed var(--line);background:transparent;padding:0 2px;font-size:16px}
+.cmt:focus{outline:none;border-bottom-color:var(--ink)}
+.cardio{display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:6px;align-items:center}
+.cu{position:relative}
+.cu input{width:100%;padding-right:30px}
+.u{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--mute);pointer-events:none}
+.pace{font-size:12px;line-height:1.2;color:var(--blue);text-align:center;font-variant-numeric:tabular-nums}
+.pace b{font-size:16px}
+
+/* единицы веса */
+.meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
+.meta #totals{flex:1;min-width:0}
+.seg{display:flex;flex:none;border:1.5px solid var(--ink);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:transparent;padding:4px 12px;min-width:46px;font-weight:650;font-size:14px}
+.seg button.on{background:var(--ink);color:#fff}
 
 .add{width:100%;padding:15px;border:2px solid var(--ink);border-radius:12px;background:transparent;font-weight:700;margin:2px 0 14px}
 textarea{width:100%;min-height:70px;border:1.5px solid var(--line);border-radius:10px;background:#fff;padding:10px;resize:vertical}
@@ -109,6 +128,7 @@ textarea{width:100%;min-height:70px;border:1.5px solid var(--line);border-radius
 .sess{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;font-variant-numeric:tabular-nums}
 .sess span:first-child{color:var(--mute);flex:none}
 .sess span:last-child{text-align:right}
+.sess small{display:block;color:var(--mute);font-size:12px;font-style:italic}
 
 /* ещё */
 .box{background:var(--paper);border-radius:14px;padding:14px;margin:0 0 14px}
@@ -155,6 +175,12 @@ nav{flex:none;background:var(--paper);border-top:1px solid var(--line);
 .gb i{display:block;height:100%;background:var(--iron)}
 .gb b{text-align:right;font-variant-numeric:tabular-nums}
 
+.backup{background:#FFF4D6;border:1.5px solid var(--gold);border-radius:12px;padding:12px 14px;margin:0 0 14px}
+.backup b{font-family:var(--num);font-size:20px}
+.backup p{margin:4px 0 0;font-size:14px}
+.bn{display:flex;gap:8px}
+.bn .btn{flex:1;margin:10px 0 0;padding:12px}
+
 #toast{position:absolute;left:50%;bottom:calc(88px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;
   padding:10px 16px;border-radius:20px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:30;max-width:90vw;text-align:center}
 #toast.on{opacity:1}
@@ -189,7 +215,7 @@ const fmtInt=n=>Math.round(n).toLocaleString('ru-RU');
 
 /* ---------- данные ---------- */
 const KEY='zhurnal.v1';
-const VERSION='1.7';
+const VERSION='1.9';
 const STRENGTH_GROUPS=['Грудь','Спина','Ноги','Плечи','Бицепс','Трицепс','Пресс','Другое'];
 const ALL_GROUPS=[...STRENGTH_GROUPS,'Кардио'];
 const SEED=[
@@ -253,6 +279,19 @@ function paceText(en){
 }
 const setsText=en=>(en.sets||[]).filter(s=>s.r).map(s=>`${fmtN(s.w||0)}×${s.r}`).join(', ');
 const cardioText=en=>[en.km?`${fmtN(en.km)} км`:'',en.min?`${fmtN(en.min)} мин`:''].filter(Boolean).join(' за ');
+const LB=2.2046226218;                                   // фунтов в килограмме; в базе вес всегда хранится в кг
+const unitOf=w=>w&&w.unit==='lb'?'lb':'kg';
+const uLabel=u=>u==='lb'?'lbs':'кг';
+const toDisp=(kg,u)=>kg==null?null:(u==='lb'?kg*LB:kg);
+const fromDisp=(v,u)=>v==null?null:(u==='lb'?v/LB:v);
+const fmtW=(kg,u)=>kg==null?'':(u==='lb'?fmtN(Math.round(kg*LB*10)/10):fmtN(kg));
+const setsTextU=(en,u)=>(en.sets||[]).filter(s=>s.r).map(s=>`${fmtW(s.w||0,u)}×${s.r}`).join(', ')+' '+uLabel(u);
+function paceHTML(en){
+  if(!en.km||!en.min)return '';
+  const p=en.min/en.km;let m=Math.floor(p),s=Math.round((p-m)*60);
+  if(s===60){m++;s=0}
+  return `<b>${m}:${pad(s)}</b> /км<br>${fmtN(Math.round(en.km/(en.min/60)*10)/10)} км/ч`;
+}
 const hasData=en=>exType(en.ex)==='s'?(en.sets||[]).some(s=>s.r):!!(en.km||en.min);
 
 function lastTime(exId,w){
@@ -260,6 +299,14 @@ function lastTime(exId,w){
     if(x.id===w.id||x.date>w.date)continue;
     const en=x.entries.find(e=>e.ex===exId&&hasData(e));
     if(en)return{date:x.date,en};
+  }
+  return null;
+}
+function lastNote(exId,w){
+  for(const x of byDateDesc()){
+    if(x.id===w.id||x.date>w.date)continue;
+    const en=x.entries.find(e=>e.ex===exId&&e.note&&e.note.trim());
+    if(en)return{date:x.date,text:en.note.trim()};
   }
   return null;
 }
@@ -285,42 +332,43 @@ function isPR(w,en,j){
 let tab='today',editing=null,curId=null,progEx=null,pickQ='';
 
 /* ---------- шаблоны ---------- */
+const openNotes=new Set();
+const IC_NOTE='<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>';
 function entryHTML(w,en,i){
-  const type=exType(en.ex);
+  const type=exType(en.ex),u=unitOf(w);
   const l=lastTime(en.ex,w);
-  const exo=exById(en.ex),grp=exo?groupOf(exo)+'. ':'';
-  const lastLine=grp+(l?`Прошлый раз, ${fmtMid(l.date)}: ${type==='s'?setsText(l.en):cardioText(l.en)}`:'Раньше не выполнялось');
-  let body;
+  const exo=exById(en.ex),grp=exo?groupOf(exo)+' · ':'';
+  const lastLine=grp+(l?`Прошлый раз, ${fmtMid(l.date)}: ${type==='s'?setsTextU(l.en,u):cardioText(l.en)}`:'Раньше не выполнялось');
+  const pn=lastNote(en.ex,w);
+  const hasNote=!!(en.note&&en.note.trim());
+  let body,btns='';
   if(type==='s'){
-    const rows=(en.sets||[]).map((s,j)=>{
+    const cells=(en.sets||[]).map((s,j)=>{
       const pr=isPR(w,en,j);
-      return `<div class="set" data-s="${j}">
-        <span class="n${pr?' pr':''}"${pr?' aria-label="рекорд"':''}>${pr?'★':j+1}</span>
-        <input inputmode="decimal" data-f="w" placeholder="0" value="${fmtN(s.w)}" aria-label="Вес, кг">
-        <input inputmode="numeric" data-f="r" placeholder="0" value="${s.r??''}" aria-label="Повторы">
-        <button class="ico" data-a="delset" aria-label="Убрать подход">−</button></div>`;
+      return `<div class="sc" data-s="${j}">${pr?'<span class="pr" aria-label="рекорд">★</span>':''}<input inputmode="decimal" data-f="w" placeholder="${uLabel(u)}" value="${fmtN(toDisp(s.w,u))}" aria-label="Вес, ${uLabel(u)}, подход ${j+1}"><span class="mul">×</span><input inputmode="numeric" data-f="r" placeholder="повт" value="${s.r??''}" aria-label="Повторы, подход ${j+1}"></div>`;
     }).join('');
-    body=`<div class="sethead"><span></span><span>кг</span><span>повторы</span><span></span></div>${rows}
-      <button class="addset" data-a="addset">+ Подход</button>`;
+    body=`<div class="sets">${cells}</div>`;
+    btns=`<button class="ib" data-a="delset" aria-label="Убрать последний подход">−</button><button class="ib" data-a="addset" aria-label="Добавить подход">+</button>`;
   }else{
-    body=`<div class="cardio">
-      <label>Дистанция, км<input inputmode="decimal" data-f="km" placeholder="0" value="${fmtN(en.km)}"></label>
-      <label>Время, мин<input inputmode="decimal" data-f="min" placeholder="0" value="${fmtN(en.min)}"></label></div>
-      <div class="pace">${paceText(en)}</div>`;
+    body=`<div class="cardio"><div class="cu"><input inputmode="decimal" data-f="km" placeholder="км" value="${fmtN(en.km)}" aria-label="Дистанция, км"><span class="u">км</span></div><div class="cu"><input inputmode="decimal" data-f="min" placeholder="мин" value="${fmtN(en.min)}" aria-label="Время, мин"><span class="u">мин</span></div><div class="pace">${paceHTML(en)}</div></div>`;
   }
+  const noteBtn=`<button class="ib${hasNote?' on':''}" data-a="note" aria-label="Заметка к упражнению">${IC_NOTE}</button>`;
+  const cmt=(hasNote||openNotes.has(en.id))?`<input class="cmt" data-f="enote" placeholder="Заметка к упражнению" value="${esc(en.note||'')}" aria-label="Заметка к упражнению">`:'';
   return `<section class="ex ${type}" data-e="${i}">
-    <div class="exhead"><h3>${esc(exName(en.ex))}</h3><button class="ico" data-a="delex" aria-label="Убрать упражнение">×</button></div>
-    <p class="last">${esc(lastLine)}</p>${body}</section>`;
+    <div class="exhead"><h3>${esc(exName(en.ex))}</h3><div class="eb">${noteBtn}${btns}<button class="ib del" data-a="delex" aria-label="Убрать упражнение">×</button></div></div>
+    <p class="last">${esc(lastLine)}</p>${pn?`<p class="pnote" data-a="pnote">Заметка, ${fmtMid(pn.date)}: ${esc(pn.text)}</p>`:''}${body}${cmt}</section>`;
 }
 function editorHTML(w,canBack){
   curId=w.id;
+  const u=unitOf(w);
   return `${canBack?'<button class="back" data-a="back">‹ История</button>':''}
     <div class="date">${fmtLong(w.date)}</div>
     <input class="title" data-f="name" placeholder="Название, например «Грудь и спина»" value="${esc(w.name)}">
-    <div id="totals">${totalsText(totals(w))}</div>
+    <div class="meta"><div id="totals">${totalsText(totals(w))}</div>
+    <div class="seg" role="group" aria-label="Единицы веса при вводе"><button data-a="unit" data-u="kg" class="${u==='kg'?'on':''}" aria-pressed="${u==='kg'}">кг</button><button data-a="unit" data-u="lb" class="${u==='lb'?'on':''}" aria-pressed="${u==='lb'}">lbs</button></div></div>
     ${w.entries.map((en,i)=>entryHTML(w,en,i)).join('')}
     <button class="add" data-a="addex">+ Добавить упражнение</button>
-    <textarea data-f="note" placeholder="Заметка: самочувствие, сон, что поменять в следующий раз">${esc(w.note)}</textarea>
+    <textarea data-f="note" placeholder="Заметка к тренировке: самочувствие, сон, что поменять в следующий раз">${esc(w.note)}</textarea>
     <div class="foot"><label>Дата <input type="date" data-f="date" value="${w.date}"></label>
     <button class="danger" data-a="delw">Удалить тренировку</button></div>`;
 }
@@ -330,6 +378,21 @@ function newDateHTML(){
     <button class="btn ghost" data-a="newdate">Создать</button></div>`;
 }
 const groupsText=w=>[...new Set(w.entries.map(e=>exById(e.ex)).filter(Boolean).map(groupOf))].join(', ');
+const DAY=864e5,BACKUP_EVERY=14*DAY;
+function ruDays(n){const m=n%10,h=n%100;return n+(h>=11&&h<=14?' дней':m===1?' день':m>=2&&m<=4?' дня':' дней')}
+function backupBannerHTML(){
+  if(!db.workouts.length)return '';
+  const now=Date.now();
+  if(db.snoozeUntil&&now<db.snoozeUntil)return '';
+  const first=Math.min(...db.workouts.map(w=>w.created||now));
+  const base=db.lastBackup||first;                      // если копий не было, отсчёт от первой тренировки
+  if(now-base<BACKUP_EVERY)return '';
+  const age=db.lastBackup?`Последняя копия: ${ruDays(Math.floor((now-db.lastBackup)/DAY))} назад.`:'Копию ещё ни разу не сохраняли.';
+  return `<div class="backup" role="alert"><b>Пора сохранить копию данных</b>
+    <p>${age} Если телефон или Safari сотрут данные приложения, тренировки не восстановить.</p>
+    <div class="bn"><button class="btn" data-a="export">Сохранить копию</button>
+    <button class="btn ghost" data-a="snooze">Позже</button></div></div>`;
+}
 function startHTML(){
   const last=byDateDesc()[0];
   return `<div class="date">${fmtLong(todayStr())}</div>
@@ -428,7 +491,7 @@ function progressHTML(){
   html+=`<div class="chart">${chartSVG(pts,type==='s'?'#D6322B':'#1F5FBF',unit)}</div>
     <p class="mute">${esc(unit)}. Золотые точки — новые рекорды.</p>
     <div class="rec">${recs.map(r=>`<div><b>${r[0]}</b><span>${r[1]}</span></div>`).join('')}</div>`;
-  html+=sess.slice(-6).reverse().map(x=>`<div class="sess"><span>${fmtMid(x.w.date)}</span><span>${type==='s'?setsText(x.en):cardioText(x.en)+(paceText(x.en)?', '+paceText(x.en).split(',')[0]:'')}</span></div>`).join('');
+  html+=sess.slice(-6).reverse().map(x=>`<div class="sess"><span>${fmtMid(x.w.date)}</span><span>${type==='s'?setsText(x.en):cardioText(x.en)+(paceText(x.en)?', '+paceText(x.en).split(',')[0]:'')}${x.en.note&&x.en.note.trim()?`<small>${esc(x.en.note.trim())}</small>`:''}</span></div>`).join('');
   return html;
 }
 function moreHTML(){
@@ -460,6 +523,7 @@ function render(){
   if(tab==='today'){
     const w=editing?wById(editing):byDateDesc().find(x=>x.date===todayStr());
     html=w?editorHTML(w,false):startHTML();
+    html=backupBannerHTML()+html;
   }else if(tab==='history'){
     const w=editing&&wById(editing);
     html=w?editorHTML(w,true):historyHTML();
@@ -474,13 +538,14 @@ function rerenderEntry(sec){
   const w=wById(curId),i=+sec.dataset.e;
   const t=document.createElement('template');
   t.innerHTML=entryHTML(w,w.entries[i],i).trim();
-  sec.replaceWith(t.content.firstChild);
+  const n=t.content.firstChild;sec.replaceWith(n);return n;
 }
 function refreshTotals(){const w=wById(curId),el=$('#totals');if(w&&el)el.textContent=totalsText(totals(w))}
 function updateStars(sec,w,en){
-  $$('.set',sec).forEach((row,j)=>{
-    const n=$('.n',row),pr=isPR(w,en,j);
-    n.classList.toggle('pr',pr);n.textContent=pr?'★':j+1;
+  $$('.sc',sec).forEach((row,j)=>{
+    const has=$('.pr',row),pr=isPR(w,en,j);
+    if(pr&&!has){const m=document.createElement('span');m.className='pr';m.setAttribute('aria-label','рекорд');m.textContent='★';row.prepend(m)}
+    else if(!pr&&has)has.remove();
   });
 }
 
@@ -514,7 +579,7 @@ function renderPick(){
 }
 function addEntry(exId){
   const w=wById(curId);if(!w)return;
-  w.entries.push(exType(exId)==='s'?{id:uid(),ex:exId,sets:[{w:null,r:null}]}:{id:uid(),ex:exId,km:null,min:null});
+  w.entries.push(exType(exId)==='s'?{id:uid(),ex:exId,sets:[{w:null,r:null},{w:null,r:null},{w:null,r:null}]}:{id:uid(),ex:exId,km:null,min:null});
   save();closeSheet();render();
   const all=$$('.ex');all[all.length-1]?.scrollIntoView({block:'center'});
 }
@@ -617,13 +682,28 @@ document.addEventListener('click',e=>{
     en.sets.push(l?{w:l.w,r:l.r}:{w:null,r:null});save();rerenderEntry(sec);refreshTotals();
   }
   else if(a==='delset'&&en){
-    en.sets.splice(+t.closest('[data-s]').dataset.s,1);save();rerenderEntry(sec);refreshTotals();
+    const l=en.sets[en.sets.length-1];if(!l)return;
+    if((l.w||l.r)&&!confirm('Убрать последний подход? В нём есть данные.'))return;
+    en.sets.pop();save();rerenderEntry(sec);refreshTotals();
+  }
+  else if(a==='note'&&en){
+    const box=$('.cmt',sec),filled=!!(en.note&&en.note.trim());
+    if(box&&!filled){openNotes.delete(en.id);rerenderEntry(sec)}
+    else if(box){box.focus()}
+    else{openNotes.add(en.id);const n=rerenderEntry(sec);$('.cmt',n)?.focus()}
+  }
+  else if(a==='pnote'){t.classList.toggle('open')}
+  else if(a==='unit'&&w){
+    if(unitOf(w)===t.dataset.u)return;
+    w.unit=t.dataset.u;save();
+    const st=$('#app').scrollTop;render();$('#app').scrollTop=st;
   }
   else if(a==='delw'&&w){
     if(confirm('Удалить эту тренировку целиком?')){db.workouts=db.workouts.filter(x=>x.id!==w.id);save();editing=null;render()}
   }
   else if(a==='export'){exportData()}
   else if(a==='update'){checkUpdate()}
+  else if(a==='snooze'){db.snoozeUntil=Date.now()+3*DAY;save();render();toast('Напомню через 3 дня')}
   else if(a==='exrename'){
     const ex=exById(t.dataset.id),n=prompt('Новое название',ex.name);
     if(n&&n.trim()){ex.name=n.trim();save();render()}
@@ -649,10 +729,12 @@ document.addEventListener('input',e=>{
     const en=w.entries[+sec.dataset.e];
     if(f==='w'||f==='r'){
       const s=en.sets[+el.closest('[data-s]').dataset.s];
-      if(f==='w')s.w=num(el.value);else{const n=num(el.value);s.r=n?Math.round(n):null}
+      if(f==='w')s.w=fromDisp(num(el.value),unitOf(w));else{const n=num(el.value);s.r=n?Math.round(n):null}
       updateStars(sec,w,en);
     }else if(f==='km'||f==='min'){
-      en[f]=num(el.value);$('.pace',sec).textContent=paceText(en);
+      en[f]=num(el.value);$('.pace',sec).innerHTML=paceHTML(en);
+    }else if(f==='enote'){
+      en.note=el.value;
     }
   }
   save();refreshTotals();
